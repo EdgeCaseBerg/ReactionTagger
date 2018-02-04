@@ -5,6 +5,7 @@ import model.configuration._
 import java.nio.file.{ Files, Path, StandardOpenOption }
 import java.nio.charset.Charset
 import java.io.IOException
+import javax.inject.{ Inject, Named }
 
 import scala.util.control.NonFatal
 
@@ -32,8 +33,8 @@ object ConfigurationService {
 
 import play.api.libs.json._
 
-class ConfigurationService(
-		val configurationLocation: Path
+class ConfigurationService @Inject() (
+		@Named("configurationLocation") val configurationLocation: Path
 ) {
 	import ConfigurationService._
 	def loadConf(): AppConfig = {
