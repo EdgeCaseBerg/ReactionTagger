@@ -42,11 +42,16 @@ class ConfigurationService(
 				Files.readAllBytes(configurationLocation)
 			} catch {
 				case e: IOException =>
+					/* Save the configuration */
+					saveConf(defaultConfiguration) match {
+						case e: SaveFailure => throw e.throwable
+						case _ =>
+					}
+
+					/*  Return the bytes we know we just saved*/
 					val fileData = Json.prettyPrint(Json.toJson(defaultConfiguration))
 					val bytes = fileData.getBytes(Charset.forName("UTF-8"))
-					Files.write(configurationLocation, bytes, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
 					bytes
-
 			}
 		}
 		try {
@@ -64,6 +69,14 @@ class ConfigurationService(
 	}
 
 	def saveConf(appConfig: AppConfig): SaveResult = {
-		GeneralFailure(new RuntimeException(":("))
+		try {
+			val fileData = Json.prettyPrint(Json.toJson(defaultConfiguration))
+			val bytes = fileData.getBytes(Charset.forName("UTF-8"))
+			Files.write(configurationLocation, bytes, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
+			SaveSuccess
+		} catch {
+			case e: SecurityException => AccessFailure(e)
+			case NonFatal(e) => GeneralFailure(e)
+		}
 	}
 }
