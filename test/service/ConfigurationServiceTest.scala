@@ -31,7 +31,28 @@ class ConfigurationServiceTest() extends FlatSpec with Matchers {
 		} finally {
 			Files.deleteIfExists(path)
 		}
+	}
 
+	class MeanSecurityManager(pathToDeny: Path) extends SecurityManager {
+		override def checkWrite(file: String) {
+			if (file.equals(pathToDeny.toAbsolutePath().toString())) {
+				super.checkWrite(file)
+				throw new SecurityException("!")
+			}
+		}
+		override def checkDelete(file: String) {}
+
+		override def checkPermission(perm: java.security.Permission) = {}
+	}
+
+	def withSecurityManager(sm: SecurityManager)(f: => Unit) = {
+		val systemSecurity = System.getSecurityManager()
+		try {
+			System.setSecurityManager(sm)
+			f
+		} finally {
+			System.setSecurityManager(systemSecurity)
+		}
 	}
 
 	val testConf = AppConfig(
@@ -75,31 +96,11 @@ class ConfigurationServiceTest() extends FlatSpec with Matchers {
 		withConf(testConf) {
 			case (configurationService, path) =>
 				Files.deleteIfExists(path)
-				val sm = System.getSecurityManager()
-				try {
-					/* Disallow writing to a file so that loadConf cannot create the default configuration */
-					System.setSecurityManager(
-						new SecurityManager() {
-							override def checkWrite(file: String) {
-								if (file.equals(path.toAbsolutePath().toString())) {
-									super.checkWrite(file)
-									throw new SecurityException("!")
-								}
-							}
-							override def checkDelete(file: String) {}
-
-							override def checkPermission(perm: java.security.Permission) = {}
-						}
-					)
+				withSecurityManager(new MeanSecurityManager(path)) {
 					intercept[SecurityException] {
 						configurationService.loadConf()
 					}
-					/* Set the SM back so withConf clean up can run properly */
-					System.setSecurityManager(sm)
-				} finally {
-					System.setSecurityManager(sm)
 				}
-
 		}
 	}
 
@@ -114,14 +115,29 @@ class ConfigurationServiceTest() extends FlatSpec with Matchers {
 	}
 
 	"ConfigurationService#saveConf" should "return a SaveSuccess if a configuration is saved correctly" in {
-		pending
+		withConf(testConf) {
+			case (configurationService, _) =>
+				configurationService.saveConf(testConf) match {
+					case SaveSuccess =>
+					case other => fail(s"Expected SaveSuccess, but got ${other}")
+				}
+
+		}
 	}
 
 	it should "return an AccessFailure if the configuration cannot be saved due to security reasons" in {
-		pending
+		withConf(testConf) {
+			case (configurationService, path) =>
+				withSecurityManager(new MeanSecurityManager(path)) {
+					configurationService.saveConf(testConf) match {
+						case AccessFailure(e) =>
+						case other => fail(s"Expected AccessFailure, but got ${other}")
+					}
+				}
+		}
 	}
 
 	it should "return a GeneralFailure for any other exception during save" in {
-		pending
+		pending // Not sure how to test this
 	}
 }
