@@ -13,6 +13,7 @@ object ConfigurationService {
 	case object SaveSuccess extends SaveResult
 	sealed trait SaveFailure extends SaveResult {
 		def message: String
+		def throwable: Throwable
 	}
 	case class GeneralFailure(throwable: Throwable) extends SaveFailure {
 		def message = throwable.getMessage()
