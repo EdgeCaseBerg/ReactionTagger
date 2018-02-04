@@ -1,3 +1,5 @@
 target/
 logs/
 *.db
+conf/local.conf
+*.json
