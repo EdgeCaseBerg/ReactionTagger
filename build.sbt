@@ -13,12 +13,18 @@ autoAPIMappings := true // Allow scaladoc to grab documentation as neccesary
 
 resolvers += "Typesafe Repo" at "http://repo.typesafe.com/typesafe/releases/"
 
+resolvers += Resolver.url("Edulify Repository", url("https://edulify.github.io/modules/releases/"))(Resolver.ivyStylePatterns)
+
+
 lazy val root = (project in file(".")).enablePlugins(PlayScala, SbtWeb)
 
 libraryDependencies ++= Seq(
 	"org.mockito" % "mockito-all" % "1.10.+",
 	"org.scalatest" %% "scalatest" % "3.0.0",
-	"com.google.inject" % "guice" % "4.1.0"
+	"com.google.inject" % "guice" % "4.1.0",
+	"com.edulify" %% "play-hikaricp" % "2.1.0",
+	jdbc,
+	anorm
 )
 
 scalariformPreferences := scalariformPreferences.value
