@@ -1,5 +1,8 @@
 package global
 
+import dao._
+import dao.mysql._
+
 import com.google.inject.{ AbstractModule, Provides }
 import javax.inject.Named
 import java.nio.file.Paths
@@ -9,6 +12,8 @@ import play.api.Configuration
 class AppModule(configuration: Configuration) extends AbstractModule {
 	override def configure() {
 		bind(classOf[Configuration]).toInstance(configuration)
+
+		bind(classOf[FileDAO]).to(classOf[MySQLFileDAO])
 	}
 
 	@Provides
